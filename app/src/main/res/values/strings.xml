@@ -1,0 +1,10 @@
+<resources>
+    <string name="app_name">Uber Clone</string>
+    <string name="i_am_driver_button">I Am Driver</string>
+    <string name="i_m_customer_button">I Am Customer</string>
+    <string name="registration_button">Registration</string>
+    <string name="login_button">LogIn</string>
+    <string name="email_hint">Email</string>
+    <string name="password_hint">Password</string>
+    <string name="title_activity_driver_map">Map</string>
+</resources>
