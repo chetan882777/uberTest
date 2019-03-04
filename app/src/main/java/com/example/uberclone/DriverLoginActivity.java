@@ -61,25 +61,25 @@ public class DriverLoginActivity extends AppCompatActivity {
                 mFirebaseAuth.createUserWithEmailAndPassword(email , password)
                         .addOnCompleteListener(DriverLoginActivity.this,
                                 new OnCompleteListener<AuthResult>() {
-                            @Override
-                            public void onComplete(@NonNull Task<AuthResult> task) {
+                                    @Override
+                                    public void onComplete(@NonNull Task<AuthResult> task) {
 
-                                if(!task.isSuccessful()){
-                                    Toast.makeText(DriverLoginActivity.this,
-                                            "Registration Failed" , Toast.LENGTH_SHORT).show();
-                                }
-                                else{
-                                    String user_id = mFirebaseAuth.getUid();
-                                    DatabaseReference current_user_db = FirebaseDatabase
-                                            .getInstance()
-                                            .getReference()
-                                            .child("Users")
-                                            .child("Drivers")
-                                            .child(user_id);
-                                    current_user_db.setValue(true);
-                                }
-                            }
-                        });
+                                        if(!task.isSuccessful()){
+                                            Toast.makeText(DriverLoginActivity.this,
+                                                    "Registration Failed" , Toast.LENGTH_SHORT).show();
+                                        }
+                                        else{
+                                            String user_id = mFirebaseAuth.getUid();
+                                            DatabaseReference current_user_db = FirebaseDatabase
+                                                    .getInstance()
+                                                    .getReference()
+                                                    .child("Users")
+                                                    .child("Drivers")
+                                                    .child(user_id);
+                                            current_user_db.setValue(true);
+                                        }
+                                    }
+                                });
             }
         });
 
@@ -92,14 +92,14 @@ public class DriverLoginActivity extends AppCompatActivity {
                 mFirebaseAuth
                         .signInWithEmailAndPassword(email , password)
                         .addOnCompleteListener(DriverLoginActivity.this, new OnCompleteListener<AuthResult>() {
-                    @Override
-                    public void onComplete(@NonNull Task<AuthResult> task) {
-                        if(!task.isSuccessful()){
-                            Toast.makeText(DriverLoginActivity.this,
-                                    "LogIn Failed" , Toast.LENGTH_SHORT).show();
-                        }
-                    }
-                });
+                            @Override
+                            public void onComplete(@NonNull Task<AuthResult> task) {
+                                if(!task.isSuccessful()){
+                                    Toast.makeText(DriverLoginActivity.this,
+                                            "LogIn Failed" , Toast.LENGTH_SHORT).show();
+                                }
+                            }
+                        });
             }
         });
     }
