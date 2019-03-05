@@ -195,9 +195,11 @@ public class CustomerMapActivity extends FragmentActivity implements OnMapReadyC
                 loc2.setLongitude(driverLatLang.longitude);
 
                 float distance = loc1.distanceTo(loc2);
-
-                callUberBtn.setText("Driver Found: " + String.valueOf(distance));
-
+                if(distance < 100){
+                    callUberBtn.setText("Driver is here");
+                }else {
+                    callUberBtn.setText("Driver Found: " + String.valueOf(distance));
+                }
                 if(mDriverMarker != null){mDriverMarker.remove();}
 
                 mDriverMarker = mMap.addMarker(new MarkerOptions().position(driverLatLang).title("your Driver"));
