@@ -186,6 +186,18 @@ public class CustomerMapActivity extends FragmentActivity implements OnMapReadyC
                 }
                 LatLng driverLatLang = new LatLng(locationLat , locationLag);
 
+                Location loc1 = new Location("");
+                loc1.setLatitude(pickupLocation.latitude);
+                loc1.setLongitude(pickupLocation.longitude);
+
+                Location loc2 = new Location("");
+                loc2.setLatitude(driverLatLang.latitude);
+                loc2.setLongitude(driverLatLang.longitude);
+
+                float distance = loc1.distanceTo(loc2);
+
+                callUberBtn.setText("Driver Found: " + String.valueOf(distance));
+
                 if(mDriverMarker != null){mDriverMarker.remove();}
 
                 mDriverMarker = mMap.addMarker(new MarkerOptions().position(driverLatLang).title("your Driver"));
