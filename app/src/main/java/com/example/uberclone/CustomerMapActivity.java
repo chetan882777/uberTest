@@ -25,11 +25,17 @@ import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
+
+import java.util.HashMap;
+import java.util.List;
 
 public class CustomerMapActivity extends FragmentActivity implements OnMapReadyCallback,
         GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener,
@@ -91,7 +97,7 @@ public class CustomerMapActivity extends FragmentActivity implements OnMapReadyC
 
     private int radius = 1;
     private boolean driverFound = false;
-    private String driverId;
+    private String driverFoundId;
 
     private void getClosestDriver() {
 
@@ -109,8 +115,23 @@ public class CustomerMapActivity extends FragmentActivity implements OnMapReadyC
             public void onKeyEntered(String key, GeoLocation location) {
                 if(!driverFound){
                     driverFound = true;
-                    driverId = key;
-                    callUberBtn.setText(radius + " " + driverId);
+                    driverFoundId = key;
+
+                    DatabaseReference driverRef = FirebaseDatabase.getInstance()
+                            .getReference()
+                            .child("Users")
+                            .child("Drivers")
+                            .child(driverFoundId);
+
+                    String customerId = FirebaseAuth.getInstance().getCurrentUser().getUid();
+
+                    HashMap map = new HashMap();
+                    map.put("customerRideId" , customerId);
+
+                    driverRef.updateChildren(map);
+
+                    getDriverLocation();
+                    callUberBtn.setText("Looking for driverLocation ..");
                 }
             }
 
@@ -134,6 +155,44 @@ public class CustomerMapActivity extends FragmentActivity implements OnMapReadyC
 
             @Override
             public void onGeoQueryError(DatabaseError error) {
+
+            }
+        });
+    }
+
+    private Marker mDriverMarker;
+
+    private void getDriverLocation() {
+        DatabaseReference driverLocationRef = FirebaseDatabase.getInstance()
+                .getReference()
+                .child("driversWorking")
+                .child(driverFoundId)
+                .child("l");
+
+        driverLocationRef.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                List<Object> map = (List<Object>) dataSnapshot.getValue();
+
+                double locationLat = 0;
+                double locationLag = 0;
+
+                callUberBtn.setText("Driver Found");
+                if(map.get(0) != null){
+                    locationLat = Double.parseDouble(map.get(0).toString());
+                }
+                if(map.get(1) != null){
+                    locationLag = Double.parseDouble(map.get(1).toString());
+                }
+                LatLng driverLatLang = new LatLng(locationLat , locationLag);
+
+                if(mDriverMarker != null){mDriverMarker.remove();}
+
+                mDriverMarker = mMap.addMarker(new MarkerOptions().position(driverLatLang).title("your Driver"));
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {
 
             }
         });
