@@ -79,17 +79,15 @@ public class DriverMapActivity extends FragmentActivity implements OnMapReadyCal
                 .getReference()
                 .child("Users")
                 .child("Drivers")
-                .child(driverId);
+                .child(driverId)
+                .child("customerRideId");
 
         assignedCustomerRef.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                 if(dataSnapshot.exists()){
-                    Map<String, Object> map = (Map<String, Object>) dataSnapshot.getValue();
-                    if(map.containsKey("customerRideId")){
-                        mCustomerId = map.get("customerRideId").toString();
-                        getAssignedCustomerPickupLocation();
-                    }
+                    mCustomerId = dataSnapshot.getValue().toString();
+                    getAssignedCustomerPickupLocation();
                 }
             }
 
