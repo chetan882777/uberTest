@@ -51,6 +51,7 @@ public class DriverMapActivity extends FragmentActivity implements OnMapReadyCal
     private Button driverLogoutBtn;
 
     private String mCustomerId = "";
+    private boolean isLoggingOut = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -65,6 +66,7 @@ public class DriverMapActivity extends FragmentActivity implements OnMapReadyCal
         driverLogoutBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                isLoggingOut = true;
                 FirebaseAuth.getInstance().signOut();
                 Intent intent = new Intent(DriverMapActivity.this , MainActivity.class);
                 startActivity(intent);
@@ -233,6 +235,12 @@ public class DriverMapActivity extends FragmentActivity implements OnMapReadyCal
     @Override
     protected void onStop() {
         super.onStop();
+        if(!isLoggingOut) {
+            disconnectDriver();
+        }
+    }
+
+    private void disconnectDriver() {
         String user_id = FirebaseAuth.getInstance().getCurrentUser().getUid();
         DatabaseReference ref = FirebaseDatabase.getInstance().getReference("driversAvailable");
 

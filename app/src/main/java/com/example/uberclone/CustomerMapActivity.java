@@ -114,6 +114,9 @@ public class CustomerMapActivity extends FragmentActivity implements OnMapReadyC
                     if(pickupMarker != null){
                         pickupMarker.remove();
                     }
+                    if(mDriverMarker != null){
+                        mDriverMarker.remove();
+                    }
 
                     callUberBtn.setText("Call Uber");
                 }else {
