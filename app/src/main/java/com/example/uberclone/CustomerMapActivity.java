@@ -24,6 +24,7 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
@@ -114,6 +115,7 @@ public class CustomerMapActivity extends FragmentActivity implements OnMapReadyC
                         pickupMarker.remove();
                     }
 
+                    callUberBtn.setText("Call Uber");
                 }else {
                     requestBol = true;
 
@@ -126,7 +128,10 @@ public class CustomerMapActivity extends FragmentActivity implements OnMapReadyC
 
                     pickupLocation = new LatLng(mLocation.getLatitude(), mLocation.getLongitude());
 
-                    pickupMarker = mMap.addMarker(new MarkerOptions().position(pickupLocation).title("Pickup Here"));
+                    pickupMarker = mMap.addMarker(new MarkerOptions()
+                                    .position(pickupLocation)
+                                    .title("Pickup Here")
+                                    .icon(BitmapDescriptorFactory.fromResource(R.mipmap.ic_marker)));
 
                     callUberBtn.setText("Getting your driver ...");
 
@@ -248,7 +253,10 @@ public class CustomerMapActivity extends FragmentActivity implements OnMapReadyC
                         mDriverMarker.remove();
                     }
 
-                    mDriverMarker = mMap.addMarker(new MarkerOptions().position(driverLatLang).title("your Driver"));
+                    mDriverMarker = mMap.addMarker(new MarkerOptions()
+                            .position(driverLatLang)
+                            .title("your Driver")
+                            .icon(BitmapDescriptorFactory.fromResource(R.mipmap.ic_taxi)));
                 }
             }
 
