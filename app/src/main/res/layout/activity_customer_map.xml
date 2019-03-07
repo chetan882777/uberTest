@@ -21,6 +21,15 @@
         android:text="LogOut"
         android:id="@+id/button_customer_logout"
         />
+
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="end|top"
+        android:layout_margin="16dp"
+        android:text="Setting"
+        android:id="@+id/button_customer_setting"
+        />
     <Button
         android:layout_width="match_parent"
         android:layout_height="wrap_content"

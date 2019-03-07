@@ -49,6 +49,7 @@ public class CustomerMapActivity extends FragmentActivity implements OnMapReadyC
     private GoogleApiClient mGoogleApiClient;
     private Button customerLogoutBtn;
     private Button callUberBtn;
+    private Button settingBtn;
 
     private LatLng pickupLocation;
 
@@ -140,6 +141,15 @@ public class CustomerMapActivity extends FragmentActivity implements OnMapReadyC
 
                     getClosestDriver();
                 }
+            }
+        });
+        settingBtn = findViewById(R.id.button_customer_setting);
+        settingBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(CustomerMapActivity.this , CustomerSettingActivity.class);
+                startActivity(intent);
+                return;
             }
         });
     }
