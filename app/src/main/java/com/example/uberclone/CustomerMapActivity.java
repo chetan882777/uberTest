@@ -51,6 +51,10 @@ public class CustomerMapActivity extends FragmentActivity implements OnMapReadyC
 
     private LatLng pickupLocation;
 
+    private Marker pickupMarker;
+
+    private boolean requestBol = false;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -77,20 +81,57 @@ public class CustomerMapActivity extends FragmentActivity implements OnMapReadyC
 
             @Override
             public void onClick(View v) {
-                String user_id = FirebaseAuth.getInstance().getCurrentUser().getUid();
-                DatabaseReference ref = FirebaseDatabase.getInstance().getReference("customerRequest");
 
-                GeoFire geoFire = new GeoFire(ref);
+                if(requestBol){
 
-                geoFire.setLocation(user_id , new GeoLocation(mLocation.getLatitude() , mLocation.getLongitude()));
+                    requestBol = false;
 
-                pickupLocation = new LatLng(mLocation.getLatitude() , mLocation.getLongitude());
+                    geoQuery.removeAllListeners();
 
-                mMap.addMarker(new MarkerOptions().position(pickupLocation).title("Pickup Here"));
+                    driverLocationRef.removeEventListener(driverLocationRefListener);
 
-                callUberBtn.setText("Getting your driver ...");
+                    if(driverFoundId != null) {
+                        DatabaseReference driverRef = FirebaseDatabase.getInstance()
+                                .getReference()
+                                .child("Users")
+                                .child("Drivers")
+                                .child(driverFoundId);
+                        driverRef.setValue(true);
 
-                getClosestDriver();
+                        driverFoundId = null;
+
+                    }
+                    driverFound = false;
+                    radius = 1;
+                    String user_id = FirebaseAuth.getInstance().getCurrentUser().getUid();
+                    DatabaseReference ref = FirebaseDatabase.getInstance().getReference("customerRequest");
+
+                    GeoFire geoFire = new GeoFire(ref);
+
+                    geoFire.removeLocation(user_id);
+
+                    if(pickupMarker != null){
+                        pickupMarker.remove();
+                    }
+
+                }else {
+                    requestBol = true;
+
+                    String user_id = FirebaseAuth.getInstance().getCurrentUser().getUid();
+                    DatabaseReference ref = FirebaseDatabase.getInstance().getReference("customerRequest");
+
+                    GeoFire geoFire = new GeoFire(ref);
+
+                    geoFire.setLocation(user_id, new GeoLocation(mLocation.getLatitude(), mLocation.getLongitude()));
+
+                    pickupLocation = new LatLng(mLocation.getLatitude(), mLocation.getLongitude());
+
+                    pickupMarker = mMap.addMarker(new MarkerOptions().position(pickupLocation).title("Pickup Here"));
+
+                    callUberBtn.setText("Getting your driver ...");
+
+                    getClosestDriver();
+                }
             }
         });
     }
@@ -99,13 +140,14 @@ public class CustomerMapActivity extends FragmentActivity implements OnMapReadyC
     private boolean driverFound = false;
     private String driverFoundId;
 
+    private GeoQuery geoQuery;
     private void getClosestDriver() {
 
         DatabaseReference reference = FirebaseDatabase.getInstance().getReference().child("driversAvailable");
 
         GeoFire geoFire = new GeoFire(reference);
 
-        GeoQuery geoQuery = geoFire.queryAtLocation(
+        geoQuery = geoFire.queryAtLocation(
                 new GeoLocation(pickupLocation.latitude, pickupLocation.longitude), radius);
 
         geoQuery.removeAllListeners();
@@ -113,7 +155,7 @@ public class CustomerMapActivity extends FragmentActivity implements OnMapReadyC
         geoQuery.addGeoQueryEventListener(new GeoQueryEventListener() {
             @Override
             public void onKeyEntered(String key, GeoLocation location) {
-                if(!driverFound){
+                if(!driverFound && requestBol){
                     driverFound = true;
                     driverFoundId = key;
 
@@ -161,48 +203,53 @@ public class CustomerMapActivity extends FragmentActivity implements OnMapReadyC
     }
 
     private Marker mDriverMarker;
-
+    private DatabaseReference driverLocationRef;
+    private ValueEventListener driverLocationRefListener;
     private void getDriverLocation() {
-        DatabaseReference driverLocationRef = FirebaseDatabase.getInstance()
+        driverLocationRef = FirebaseDatabase.getInstance()
                 .getReference()
                 .child("driversWorking")
                 .child(driverFoundId)
                 .child("l");
 
-        driverLocationRef.addValueEventListener(new ValueEventListener() {
+        driverLocationRefListener = driverLocationRef.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                List<Object> map = (List<Object>) dataSnapshot.getValue();
+                if(dataSnapshot.exists() && requestBol) {
+                    List<Object> map = (List<Object>) dataSnapshot.getValue();
 
-                double locationLat = 0;
-                double locationLag = 0;
+                    double locationLat = 0;
+                    double locationLag = 0;
 
-                callUberBtn.setText("Driver Found");
-                if(map.get(0) != null){
-                    locationLat = Double.parseDouble(map.get(0).toString());
+                    callUberBtn.setText("Driver Found");
+                    if (map.get(0) != null) {
+                        locationLat = Double.parseDouble(map.get(0).toString());
+                    }
+                    if (map.get(1) != null) {
+                        locationLag = Double.parseDouble(map.get(1).toString());
+                    }
+                    LatLng driverLatLang = new LatLng(locationLat, locationLag);
+
+                    Location loc1 = new Location("");
+                    loc1.setLatitude(pickupLocation.latitude);
+                    loc1.setLongitude(pickupLocation.longitude);
+
+                    Location loc2 = new Location("");
+                    loc2.setLatitude(driverLatLang.latitude);
+                    loc2.setLongitude(driverLatLang.longitude);
+
+                    float distance = loc1.distanceTo(loc2);
+                    if (distance < 100) {
+                        callUberBtn.setText("Driver is here");
+                    } else {
+                        callUberBtn.setText("Driver Found: " + String.valueOf(distance));
+                    }
+                    if (mDriverMarker != null) {
+                        mDriverMarker.remove();
+                    }
+
+                    mDriverMarker = mMap.addMarker(new MarkerOptions().position(driverLatLang).title("your Driver"));
                 }
-                if(map.get(1) != null){
-                    locationLag = Double.parseDouble(map.get(1).toString());
-                }
-                LatLng driverLatLang = new LatLng(locationLat , locationLag);
-
-                Location loc1 = new Location("");
-                loc1.setLatitude(pickupLocation.latitude);
-                loc1.setLongitude(pickupLocation.longitude);
-
-                Location loc2 = new Location("");
-                loc2.setLatitude(driverLatLang.latitude);
-                loc2.setLongitude(driverLatLang.longitude);
-
-                float distance = loc1.distanceTo(loc2);
-                if(distance < 100){
-                    callUberBtn.setText("Driver is here");
-                }else {
-                    callUberBtn.setText("Driver Found: " + String.valueOf(distance));
-                }
-                if(mDriverMarker != null){mDriverMarker.remove();}
-
-                mDriverMarker = mMap.addMarker(new MarkerOptions().position(driverLatLang).title("your Driver"));
             }
 
             @Override

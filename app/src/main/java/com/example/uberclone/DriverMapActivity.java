@@ -26,6 +26,7 @@ import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DataSnapshot;
@@ -88,6 +89,14 @@ public class DriverMapActivity extends FragmentActivity implements OnMapReadyCal
                 if(dataSnapshot.exists()){
                     mCustomerId = dataSnapshot.getValue().toString();
                     getAssignedCustomerPickupLocation();
+                }else{
+                    mCustomerId = "";
+                    if(pickupMarker != null){
+                        pickupMarker.remove();
+                    }
+                    if(assignedCustomerPickupLocationRefListener != null) {
+                        assignedCustomerPickupLocationRef.removeEventListener(assignedCustomerPickupLocationRefListener);
+                    }
                 }
             }
 
@@ -98,17 +107,22 @@ public class DriverMapActivity extends FragmentActivity implements OnMapReadyCal
         });
     }
 
+    private Marker pickupMarker;
+    private DatabaseReference assignedCustomerPickupLocationRef;
+    private ValueEventListener assignedCustomerPickupLocationRefListener;
+
     private void getAssignedCustomerPickupLocation() {
-        DatabaseReference assignedCustomerPickupLocationRef = FirebaseDatabase.getInstance()
+        assignedCustomerPickupLocationRef = FirebaseDatabase.getInstance()
                 .getReference()
                 .child("CustomerRequest")
                 .child(mCustomerId)
                 .child("l");
 
-        assignedCustomerPickupLocationRef.addValueEventListener(new ValueEventListener() {
+        assignedCustomerPickupLocationRefListener = assignedCustomerPickupLocationRef
+                .addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                if(dataSnapshot.exists()){
+                if(dataSnapshot.exists() && !mCustomerId.equals("")){
                     List<Object> map = (List<Object>) dataSnapshot.getValue();
 
                     double locationLat = 0;
@@ -122,7 +136,7 @@ public class DriverMapActivity extends FragmentActivity implements OnMapReadyCal
                     }
                     LatLng driverLatLang = new LatLng(locationLat , locationLag);
 
-                   mMap.addMarker(new MarkerOptions().position(driverLatLang).title("Pickup location"));
+                   pickupMarker = mMap.addMarker(new MarkerOptions().position(driverLatLang).title("Pickup location"));
                 }
             }
 
