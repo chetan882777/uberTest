@@ -49,8 +49,7 @@
         android:layout_gravity="bottom"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:background="@android:color/white">
+        android:orientation="vertical">
 
         <LinearLayout
             android:id="@+id/driverInfo"
@@ -75,20 +74,20 @@
                     android:id="@+id/driverName"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Driver's name"
+                    android:text="DriverName"
                     android:paddingBottom="10sp"
                     android:paddingTop="20sp"/>
                 <TextView
                     android:id="@+id/driverPhone"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Driver's phone"
+                    android:text="DriverPhone"
                     android:paddingBottom="10sp"/>
                 <TextView
                     android:id="@+id/driverCar"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Driver's car"/>
+                    android:text="DriverCar"/>
             </LinearLayout>
         </LinearLayout>
         <Button

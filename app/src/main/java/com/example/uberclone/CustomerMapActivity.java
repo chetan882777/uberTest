@@ -1,6 +1,5 @@
 package com.example.uberclone;
 
-import android.Manifest;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Location;
@@ -9,7 +8,6 @@ import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
@@ -67,7 +65,7 @@ public class CustomerMapActivity extends FragmentActivity implements OnMapReadyC
 
     private Marker pickupMarker;
 
-    private LinearLayout mInfoLayout;
+    private LinearLayout mDriverInfo;
 
     private SupportMapFragment mapFragment;
 
@@ -89,7 +87,7 @@ public class CustomerMapActivity extends FragmentActivity implements OnMapReadyC
             mapFragment.getMapAsync(this);
         }
 
-        mInfoLayout = (LinearLayout) findViewById(R.id.driverInfo);
+        mDriverInfo = (LinearLayout) findViewById(R.id.driverInfo);
 
         mDriverProfileImage = (ImageView) findViewById(R.id.driverProfileImage);
 
@@ -120,12 +118,11 @@ public class CustomerMapActivity extends FragmentActivity implements OnMapReadyC
                     requestBol = false;
                     geoQuery.removeAllListeners();
                     driverLocationRef.removeEventListener(driverLocationRefListener);
-                    driverInfoDatabase.removeEventListener(driverInfoDatabaseListener);
 
 
                     if (driverFoundID != null){
-                        DatabaseReference driverRef = FirebaseDatabase.getInstance().getReference().child("Users").child("Drivers").child(driverFoundID);
-                        driverRef.setValue(true);
+                        DatabaseReference driverRef = FirebaseDatabase.getInstance().getReference().child("Users").child("Drivers").child(driverFoundID).child("customerRequest");
+                        driverRef.removeValue();
                         driverFoundID = null;
 
                     }
@@ -144,7 +141,11 @@ public class CustomerMapActivity extends FragmentActivity implements OnMapReadyC
                         mDriverMarker.remove();
                     }
                     mRequest.setText("call Uber");
-                    mInfoLayout.setVisibility(View.GONE);
+                    mDriverName.setText("");
+                    mDriverPhone.setText("");
+                    mDriverCar.setText("Destination: --");
+                    mDriverProfileImage.setImageResource(R.mipmap.ic_boy);
+                    mDriverInfo.setVisibility(View.GONE);
 
                 }else{
                     requestBol = true;
@@ -158,9 +159,10 @@ public class CustomerMapActivity extends FragmentActivity implements OnMapReadyC
                     pickupLocation = new LatLng(mLastLocation.getLatitude(), mLastLocation.getLongitude());
                     pickupMarker = mMap.addMarker(new MarkerOptions().position(pickupLocation).title("Pickup Here").icon(BitmapDescriptorFactory.fromResource(R.mipmap.ic_marker)));
 
-                    mRequest.setText("Getting your Driver....");
-
                     getClosestDriver();
+
+                    getDriverInfo();
+                    mRequest.setText("Looking for Driver Location....");
                 }
             }
         });
@@ -291,7 +293,6 @@ public class CustomerMapActivity extends FragmentActivity implements OnMapReadyC
 
                     mDriverMarker = mMap.addMarker(new MarkerOptions().position(driverLatLng).title("your driver").icon(BitmapDescriptorFactory.fromResource(R.mipmap.ic_taxi)));
 
-                    getDriverInfo();
                 }
 
             }
@@ -303,15 +304,13 @@ public class CustomerMapActivity extends FragmentActivity implements OnMapReadyC
 
     }
 
-    private DatabaseReference driverInfoDatabase;
-    private ValueEventListener driverInfoDatabaseListener;
     private void getDriverInfo(){
-        driverInfoDatabase= FirebaseDatabase.getInstance().getReference().child("Users").child("Drivers").child(driverFoundID);
-        driverInfoDatabase.keepSynced(true);
-        driverInfoDatabaseListener = driverInfoDatabase.addValueEventListener(new ValueEventListener() {
+        mDriverInfo.setVisibility(View.VISIBLE);
+        DatabaseReference mCustomerDatabase = FirebaseDatabase.getInstance().getReference().child("Users").child("Drivers").child(driverFoundID);
+        mCustomerDatabase.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
-                if (dataSnapshot.exists()) {
+                if (dataSnapshot.exists() && dataSnapshot.getChildrenCount() > 0) {
                     Map<String, Object> map = (Map<String, Object>) dataSnapshot.getValue();
                     String name = "";
                     String phone = "";
