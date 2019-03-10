@@ -60,7 +60,6 @@ public class DriverMapActivity extends FragmentActivity implements OnMapReadyCal
 
     private Button mLogout;
 
-    private String customerId = "";
 
     private Boolean isLoggingOut = false;
 
@@ -72,7 +71,11 @@ public class DriverMapActivity extends FragmentActivity implements OnMapReadyCal
 
     private TextView mCustomerName, mCustomerPhone, mCustomerDestination;
 
-    private Button mSettings;
+    private Button mSettings, mRideStatus;
+    private int status = 0;
+
+    private String customerId = "", destination;
+    private LatLng destinationLatLng;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -123,6 +126,26 @@ public class DriverMapActivity extends FragmentActivity implements OnMapReadyCal
                 return;
             }
         });
+        mRideStatus = (Button) findViewById(R.id.rideStatus);
+        mRideStatus.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                switch(status){
+                    case 1:
+                        status=2;
+                        erasePolylines();
+                        if(destinationLatLng.latitude!=0.0 && destinationLatLng.longitude!=0.0){
+                            getRouteToMarker(destinationLatLng);
+                        }
+                        mRideStatus.setText("drive completed");
+
+                        break;
+                    case 2:
+                        endRide();
+                        break;
+                }
+            }
+        });
         getAssignedCustomer();
     }
 
@@ -133,24 +156,13 @@ public class DriverMapActivity extends FragmentActivity implements OnMapReadyCal
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
                 if(dataSnapshot.exists()){
+                    status = 1;
                     customerId = dataSnapshot.getValue().toString();
                     getAssignedCustomerPickupLocation();
                     getAssignedCustomerDestination();
                     getAssignedCustomerInfo();
                 }else{
-                    erasePolylines();
-                    customerId = "";
-                    if(pickupMarker!= null){
-                        pickupMarker.remove();
-                    }
-                    if (assignedCustomerPickupLocationRefListener != null){
-                        assignedCustomerPickupLocationRef.removeEventListener(assignedCustomerPickupLocationRefListener);
-                    }
-                    mCustomerInfo.setVisibility(View.GONE);
-                    mCustomerName.setText("");
-                    mCustomerPhone.setText("");
-                    mCustomerDestination.setText("Destination: --");
-                    mCustomerProfileImage.setImageResource(R.mipmap.ic_boy);
+                    endRide();
 
                 }
             }
@@ -205,13 +217,28 @@ public class DriverMapActivity extends FragmentActivity implements OnMapReadyCal
 
     private void getAssignedCustomerDestination(){
         String driverId = FirebaseAuth.getInstance().getCurrentUser().getUid();
-        DatabaseReference assignedCustomerRef = FirebaseDatabase.getInstance().getReference().child("Users").child("Drivers").child(driverId).child("customerRequest").child("destination");
+        DatabaseReference assignedCustomerRef = FirebaseDatabase.getInstance().getReference().child("Users").child("Drivers").child(driverId).child("customerRequest");
         assignedCustomerRef.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
                 if(dataSnapshot.exists()){
-                    String destination = dataSnapshot.getValue().toString();
-                    mCustomerDestination.setText("Destination: " + destination);
+                    Map<String, Object> map = (Map<String, Object>) dataSnapshot.getValue();
+
+                    if(map.get("destination") != null){
+                        destination = map.get("destination").toString();
+                        mCustomerDestination.setText("Destination: " + destination);
+                    }else {
+                        mCustomerDestination.setText("Destination: " + destination);
+                    }
+                    Double destinationLat = 0.0;
+                    Double destinationLng = 0.0;
+                    if(map.get("destinationLat") != null){
+                        destinationLat = Double.valueOf(map.get("destinationLat").toString());
+                    }
+                    if(map.get("destinationLng") != null){
+                        destinationLng = Double.valueOf(map.get("destinationLng").toString());
+                        destinationLatLng = new LatLng(destinationLat, destinationLng);
+                    }
                 }else{
                     mCustomerDestination.setText("Destination: --");
                 }
@@ -403,5 +430,32 @@ public class DriverMapActivity extends FragmentActivity implements OnMapReadyCal
             line.remove();
         }
         polylines.clear();
+    }
+
+
+    private void endRide(){
+        mRideStatus.setText("picked customer");
+        erasePolylines();
+
+        String userId = FirebaseAuth.getInstance().getCurrentUser().getUid();
+        DatabaseReference driverRef = FirebaseDatabase.getInstance().getReference().child("Users").child("Drivers").child(userId).child("customerRequest");
+        driverRef.removeValue();
+
+        DatabaseReference ref = FirebaseDatabase.getInstance().getReference("customerRequest");
+        GeoFire geoFire = new GeoFire(ref);
+        geoFire.removeLocation(customerId);
+        customerId="";
+
+        if(pickupMarker != null){
+            pickupMarker.remove();
+        }
+        if (assignedCustomerPickupLocationRefListener != null){
+            assignedCustomerPickupLocationRef.removeEventListener(assignedCustomerPickupLocationRefListener);
+        }
+        mCustomerInfo.setVisibility(View.GONE);
+        mCustomerName.setText("");
+        mCustomerPhone.setText("");
+        mCustomerDestination.setText("Destination: --");
+        mCustomerProfileImage.setImageResource(R.mipmap.ic_boy);
     }
 }
