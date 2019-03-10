@@ -46,6 +46,7 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -141,6 +142,7 @@ public class DriverMapActivity extends FragmentActivity implements OnMapReadyCal
 
                         break;
                     case 2:
+                        recordRide();
                         endRide();
                         break;
                 }
@@ -432,6 +434,23 @@ public class DriverMapActivity extends FragmentActivity implements OnMapReadyCal
         polylines.clear();
     }
 
+    private void recordRide(){
+        String userId = FirebaseAuth.getInstance().getCurrentUser().getUid();
+        DatabaseReference driverRef = FirebaseDatabase.getInstance().getReference().child("Users").child("Drivers").child(userId).child("history");
+        DatabaseReference customerRef = FirebaseDatabase.getInstance().getReference().child("Users").child("Customers").child(customerId).child("history");
+        DatabaseReference historyRef = FirebaseDatabase.getInstance().getReference().child("history");
+        String requestId = historyRef.push().getKey();
+        driverRef.child(requestId).setValue(true);
+        customerRef.child(requestId).setValue(true);
+
+        HashMap map = new HashMap();
+        map.put("driver", userId);
+        map.put("customer", customerId);
+        map.put("rating", 0);
+        historyRef.child(requestId).updateChildren(map);
+
+
+    }
 
     private void endRide(){
         mRideStatus.setText("picked customer");
